@@ -3,7 +3,20 @@ const path = require('path')
 const app = express()
 const port = 3000
 const cors = express('cors');
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
+const mysql = require('mysql')
+
+//db details
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: 'nachi',
+  database: 'temp1'
+})
+connection.connect(function(err) {
+  if (err) throw err
+  console.log(`'You are now connected to connection...`);
+})
 
 //getting data in json form
 app.use(express.json());
@@ -19,29 +32,33 @@ app.use(bodyParser.urlencoded({
 //changing data to json
 app.use(bodyParser.json());
 
-
-
 // home page push
 app.get('/form', (req, res) => {
  res.sendFile(path.join(__dirname, '/index.html'));
 })
 
-
+//post res upon fetch req.
 app.post('/formPost',(req,res)=>{
 
   //console.log(req.body);
   const dataReceived = req.body;
   
+  connection.query(`SELECT * FROM data WHERE username='${dataReceived.username}'`, function(err,result){
+    if (err) throw err;
+    let row = Object.values(JSON.parse(JSON.stringify(result)));
+    //console.log(row);
+    if(row[0].password==dataReceived.password)
+      res.sendFile(path.join(__dirname, '/public/thanks.html'));
+    else{
+        console.log("USERNAME OR PASSWORD IS WRONG, TRY RESETING THE PASSWORD");
+  }
+  })
   
-
-  if(dataReceived.username == "Nachiket"){
-    res.sendFile(path.join(__dirname, '/public/thanks.html'));
-  }
-  else{
-    console.log("Machudao");
-  }
 });
 
+app.get('/signup', (req, res) => {
+  res.sendFile(path.join(__dirname, '/signup.html'));
+ })
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
